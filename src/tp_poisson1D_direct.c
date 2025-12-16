@@ -18,6 +18,8 @@
  *              argv[1] (optional): Implementation method (0=TRF, 1=TRI, 2=SV)
  * @return 0 on success
  */
+
+
 int main(int argc,char *argv[])
 /* ** argc: Nombre d'arguments */
 /* ** argv: Valeur des arguments */
@@ -68,6 +70,8 @@ int main(int argc,char *argv[])
   write_vec(EX_SOL, &la, "EX_SOL.dat");
   write_vec(X, &la, "X_grid.dat");
 
+
+
   /* Set up band storage parameters for tridiagonal matrix */
   kv=1;             /* Number of superdiagonals */
   ku=1;             /* Number of superdiagonals in original matrix */
@@ -106,7 +110,11 @@ int main(int argc,char *argv[])
 
   /* Alternative: solve directly using dgbsv */
   if (IMPLEM == SV) {
-    // TODO : use dgbsv
+    dgbsv_(&la, &kl, &ku, &NRHS, AB, &lab, ipiv, RHS, &la, &info);
+    if (info!=0)
+    {
+       printf("\n INFO DGBSV = %d\n",info);
+    }
   }
 
   /* Write results to files */
