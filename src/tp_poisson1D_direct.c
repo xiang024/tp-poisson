@@ -5,6 +5,7 @@
 /* using direct methods (LU factorization)*/
 /******************************************/
 #include "lib_poisson1D.h"
+#include <time.h>
 
 #define TRF 0  /* Use LAPACK dgbtrf for LU factorization */
 #define TRI 1  /* Use custom tridiagonal LU factorization */
@@ -18,8 +19,6 @@
  *              argv[1] (optional): Implementation method (0=TRF, 1=TRI, 2=SV)
  * @return 0 on success
  */
-
-
 int main(int argc,char *argv[])
 /* ** argc: Nombre d'arguments */
 /* ** argv: Valeur des arguments */
@@ -39,16 +38,23 @@ int main(int argc,char *argv[])
 
   double relres;                 /* Relative forward error */
 
-  if (argc == 2) {
-    IMPLEM = atoi(argv[1]);
-  } else if (argc > 2) {
-    perror("Application takes at most one argument");
-    exit(1);
-  }
+if (argc >= 2) {
+  IMPLEM = atoi(argv[1]);   // méthode
+}
+if (argc >= 3) {
+  nbpoints = atoi(argv[2]); // taille du problème
+} else {
+  nbpoints = 10;            // valeur par défaut
+}
+if (argc > 3) {
+  perror("Usage: ./tpPoisson1D_direct <method> <nbpoints>");
+  exit(1);
+}
+
 
   /* Problem setup */
   NRHS=1;           /* Solving Ax=b with one right-hand side */
-  nbpoints=10;      /* Total number of discretization points (including boundaries) */
+  /*Delete for testing different size*/                  /* Total number of discretization points (including boundaries) */
   la=nbpoints-2;    /* Number of interior points (excluding boundaries) */
   T0=-5.0;          /* Dirichlet boundary condition at x=0 */
   T1=5.0;           /* Dirichlet boundary condition at x=1 */
@@ -70,8 +76,6 @@ int main(int argc,char *argv[])
   write_vec(EX_SOL, &la, "EX_SOL.dat");
   write_vec(X, &la, "X_grid.dat");
 
-
-
   /* Set up band storage parameters for tridiagonal matrix */
   kv=1;             /* Number of superdiagonals */
   ku=1;             /* Number of superdiagonals in original matrix */
@@ -88,6 +92,10 @@ int main(int argc,char *argv[])
   ipiv = (int *) calloc(la, sizeof(int));  /* Pivot indices for LU factorization */
 
   /* LU Factorization using LAPACK's general band factorization */
+  clock_t start, end;
+  double elapsed_time;
+
+  start = clock(); /* Start timing */
   if (IMPLEM == TRF) {
     dgbtrf_(&la, &la, &kl, &ku, AB, &lab, ipiv, &info);
   }
@@ -116,6 +124,10 @@ int main(int argc,char *argv[])
        printf("\n INFO DGBSV = %d\n",info);
     }
   }
+  end= clock(); /* End timing */
+  elapsed_time = ((double)(end - start)) / CLOCKS_PER_SEC;
+  printf("Elapsed time for solving the system: %f seconds\n", elapsed_time); 
+
 
   /* Write results to files */
   write_GB_operator_colMajor_poisson1D(AB, &lab, &la, "LU.dat");  /* LU factors */
@@ -124,8 +136,11 @@ int main(int argc,char *argv[])
   /* Relative forward error - compare numerical solution with exact solution */
   relres = relative_forward_error(RHS, EX_SOL, &la);
   
-  printf("\nThe relative forward error is relres = %e\n",relres);
+  printf("Problem size: nbpoints = %d, interior points = %d\n", nbpoints, la);
 
+  printf("\nThe relative forward error is relres = %e\n",relres);
+  /*  Machine readable output for scripts */
+  printf("%d %d %d %.6e %.6e\n",IMPLEM, nbpoints, la, elapsed_time, relres);
   /* Free allocated memory */
   free(RHS);
   free(EX_SOL);

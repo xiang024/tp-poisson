@@ -9,6 +9,8 @@
 #define ALPHA 0  /* Richardson iteration with optimal alpha */
 #define JAC 1    /* Richardson with Jacobi preconditioning */
 #define GS 2     /* Richardson with Gauss-Seidel preconditioning */
+#define CSR 3    /* Use CSR format and iterative solver (not implemented) */
+#define CSC 4    /* Use CSC format and iterative solver (not implemented) */
 
 /**
  * Main function to solve the 1D Poisson equation using iterative methods.
@@ -39,16 +41,31 @@ int main(int argc,char *argv[])
 
   double opt_alpha;                   /* Optimal relaxation parameter */
 
-  if (argc == 2) {
+  CSRMatrix CSR_A;                   /* CSR matrix structure */
+  CSCMatrix CSC_A;                   /* CSC matrix structure */
+
+
+
+/* Default values */
+IMPLEM = 0;
+nbpoints = 100;
+
+if (argc >= 2) {
     IMPLEM = atoi(argv[1]);
-  } else if (argc > 2) {
-    perror("Application takes at most one argument");
-    exit(1);
-  }
+}
+
+if (argc >= 3) {
+    nbpoints = atoi(argv[2]);
+}
+
+if (argc > 3) {
+    fprintf(stderr, "Usage: %s METHOD [N]\n", argv[0]);
+    exit(EXIT_FAILURE);
+}
 
   /* Problem size setup */
   NRHS=1;           /* Single right-hand side */
-  nbpoints=12;      /* Total discretization points */
+  /*change to 100*/      /* Total discretization points */
   la=nbpoints-2;    /* Interior points only */
 
   /* Dirichlet Boundary conditions */
@@ -127,6 +144,20 @@ int main(int argc,char *argv[])
   if (IMPLEM == JAC || IMPLEM == GS) {
     write_GB_operator_colMajor_poisson1D(MB, &lab, &la, "MB.dat");
     richardson_MB(AB, RHS, SOL, MB, &lab, &la, &ku, &kl, &tol, &maxit, resvec, &nbite);
+  }
+  if (IMPLEM == CSR) {
+    set_CSR_operator_poisson1D(&CSR_A, &la);
+    richardson_alpha_csr(&CSR_A, RHS, SOL, &opt_alpha, &tol, &maxit, resvec, &nbite);
+    free(CSR_A.values);
+    free(CSR_A.col_ind);
+    free(CSR_A.row_ptr);
+  }
+  if (IMPLEM == CSC) {
+    set_CSC_operator_poisson1D(&CSC_A, &la);
+    richardson_alpha_csc(&CSC_A, RHS, SOL, &opt_alpha, &tol, &maxit, resvec, &nbite);
+    free(CSC_A.values);
+    free(CSC_A.row_ind);
+    free(CSC_A.col_ptr);
   }
 
   /* Write solution and convergence history to files */

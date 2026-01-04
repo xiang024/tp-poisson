@@ -37,3 +37,57 @@ Here:
 $ make run_testenv
 $ make run_tpPoisson1D_iter
 $ make run_tpPoisson1D_direct
+
+##########################################################
+# Docker workflow (recommended)
+##########################################################
+
+From the repository root, start a shell in the Docker image:
+
+$ docker run --rm -it -v $(pwd):/home/tp:Z -w /home/tp tp-cn:latest /bin/bash
+
+Inside the container, compile:
+
+$ make clean
+$ make
+
+------------------------------
+Part 1 — Direct method
+------------------------------
+
+Inside the container, run the tests (cases 0/1/2):
+
+$ ./bin/tpPoisson1D_direct 0
+$ ./bin/tpPoisson1D_direct 1
+$ ./bin/tpPoisson1D_direct 2
+
+Or run them via the helper script:
+
+$ ./scripts/run_direct.sh
+
+Then exit the container and (on the host) generate the plots:
+
+$ python3 scripts/plot_direct.py
+
+------------------------------
+Part 2 — Iterative method
+------------------------------
+
+Inside the container, run the tests (cases 0/1/2):
+
+$ ./bin/tpPoisson1D_iter 0
+$ ./bin/tpPoisson1D_iter 1
+$ ./bin/tpPoisson1D_iter 2
+
+Or run them via the helper script:
+
+$ ./scripts/run_iter.sh
+
+Then exit the container and (on the host) generate the plots:
+
+$ python3 scripts/plot_iter.py
+
+Finally, you can use the following cases to inspect sparse formats:
+
+$ ./bin/tpPoisson1D_iter 3   # CSR
+$ ./bin/tpPoisson1D_iter 4   # CSC

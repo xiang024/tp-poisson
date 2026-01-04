@@ -57,7 +57,7 @@ void set_grid_points_1D(double* x, int* la);
 /**
  * Compute the relative forward error between two vectors
  * @param x: Computed solution vector (size la)
- * @param y: Reference/exact solution vector (size la)
+ * @param y: Reference/exact solution vector (size la), can be modified
  * @param la: Vector size
  * @return Relative forward error ||x-y||/||x||
  */
@@ -214,3 +214,32 @@ int indexABCol(int i, int j, int *lab);
  * @return info value
  */
 int dgbtrftridiag(int *la, int *n, int *kl, int *ku, double *AB, int *lab, int *ipiv, int *info);
+
+typedef struct {
+  int n;
+  int nnz;
+  double *values;
+  int *col_ind;
+  int *row_ptr;
+} CSRMatrix;
+
+typedef struct {
+  int n;
+  int nnz;
+  double *values;
+  int *row_ind;
+  int *col_ptr;
+} CSCMatrix;
+
+
+void set_CSR_operator_poisson1D(CSRMatrix *A, int *la);
+
+void set_CSC_operator_poisson1D(CSCMatrix *A, int *la);
+
+void dcsrmv(const CSRMatrix *A, const double *x, double *y);
+
+void dcscmv(const CSCMatrix *A, const double *x, double *y);
+
+void richardson_alpha_csr(CSRMatrix *A, double *b, double *x,double *alpha, double *tol, int *maxit,double *resvec, int *nbite);
+
+void richardson_alpha_csc(CSCMatrix *A, double *b, double *x,double *alpha, double *tol, int *maxit,double *resvec, int *nbite);
